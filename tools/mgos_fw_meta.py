@@ -428,6 +428,18 @@ def add_file_to_arc(args, part, arc_dir, src_file, added):
         added[arc_file] = src_file
 
 
+
+
+def fixed_sort(item):
+    priority_keys = ("bootloader.bin", "partition-table.bin", "otadata.bin")
+    key = item[0].lower()
+    key = os.path.basename(key)
+    if key in priority_keys:
+        return (priority_keys.index(key), key)
+    else:
+        return (len(priority_keys), key)
+
+
 def cmd_create_fw(args):
     manifest = json.load(open(args.manifest, encoding="utf-8"))
     arc_dir = '%s-%s' % (manifest['name'], manifest['version'])
@@ -449,10 +461,9 @@ def cmd_create_fw(args):
                     add_file_to_arc(args, part,
                                     os.path.join(arc_dir, part_name),
                                     os.path.join(part_name, fname), to_add)
-        for arc_file, src_file in sorted(to_add.items()):
+        for arc_file, src_file in sorted(to_add.items(),key=fixed_sort):
             print('     Adding %s' % src_file)
             zf.write(src_file, arc_file)
-
 
 def cmd_get(args):
     o = json.load(open(args.json_file, encoding="utf-8"))
