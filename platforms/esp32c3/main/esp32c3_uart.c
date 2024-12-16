@@ -326,28 +326,6 @@ bool mgos_uart_hal_init(struct mgos_uart_state *us) {
 #define FOSC_CLK_FREQ 17500000
 #define BAUD_ERR_THRESH 5
 
-// Calculate divider values to obtain a given baud rate (within 5 bps).
-// Tru to reduce core clock (maximize sclk_div).
-static void calc_clkdiv(uint32_t freq, int baud_rate, uint32_t *sclk_div_out,
-                        uint32_t *div_out, uint32_t *frac_out) {
-  int best_err = INT_MAX;
-  for (uint32_t sclk_div = 1; sclk_div <= 256; sclk_div++) {
-    uint32_t dfreq = freq / sclk_div;
-    uint32_t v = ((dfreq << 4) / baud_rate);
-    uint32_t div = v >> 4;
-    uint32_t frac = v & 0xf;
-    if (div < 3) break;
-    int real_baud_rate = (float) dfreq / ((float) div + (frac / 16.0f));
-    int baud_err = abs(baud_rate - real_baud_rate);
-    if (baud_err < best_err || baud_err < BAUD_ERR_THRESH) {
-      *sclk_div_out = sclk_div;
-      *div_out = div;
-      *frac_out = frac;
-      best_err = baud_err;
-    }
-  }
-}
-
 bool mgos_uart_hal_configure(struct mgos_uart_state *us,
                              const struct mgos_uart_config *cfg) {
   int uart_no = us->uart_no;
@@ -366,33 +344,9 @@ bool mgos_uart_hal_configure(struct mgos_uart_state *us,
   ud->int_ena.val = 0;
 
   uint32_t conf0 = UART_MEM_CLK_EN;
+  uart_set_baudrate(uart_no, cfg->baud_rate);
 
-  if (cfg->baud_rate > 0) {
-    uint32_t sclk_sel = 2;  // FOSC
-    uint32_t sclk_div = 0, div_int = 0, div_frac = 0;
-    calc_clkdiv(FOSC_CLK_FREQ, cfg->baud_rate, &sclk_div, &div_int, &div_frac);
-    if (sclk_div * div_int >= 8) {  // Up to 2Mbaud
-      RTCCNTL.clk_conf.dig_clk8m_en = true;
-    } else {
-      sclk_sel = 3;
-      calc_clkdiv(XTAL_CLK_FREQ, cfg->baud_rate, &sclk_div, &div_int,
-                  &div_frac);
-    }
-    if (ud->clk_conf.sclk_sel != sclk_sel ||
-        ud->clk_conf.sclk_div_num != sclk_div - 1 ||
-        ud->clk_div.div_int != div_int || ud->clk_div.div_frag != div_frac) {
-      mgos_uart_hal_flush_fifo(us);
-      ud->clk_conf.sclk_sel = sclk_sel;
-      ud->clk_conf.sclk_div_num = sclk_div - 1;
-      ud->clk_conf.sclk_div_a = 0;
-      ud->clk_conf.sclk_div_b = 0;
-      ud->clk_div.div_int = div_int;
-      ud->clk_div.div_frag = div_frac;
-      ud->clk_conf.sclk_en = true;
-      ud->clk_conf.tx_sclk_en = true;
-      ud->clk_conf.rx_sclk_en = true;
-    }
-  }
+
 
   if (uart_set_pin(uart_no, cfg->dev.tx_gpio, cfg->dev.rx_gpio,
                    (cfg->rx_fc_type == MGOS_UART_FC_HW ? cfg->dev.rts_gpio
