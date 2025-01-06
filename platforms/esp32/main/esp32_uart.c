@@ -21,13 +21,14 @@
 #include <string.h>
 #include <sys/param.h>
 
-#include "driver/periph_ctrl.h"
 #include "driver/uart.h"
 #include "esp32/rom/uart.h"
 #include "esp_attr.h"
 #include "esp_intr_alloc.h"
 #include "soc/dport_access.h"
 #include "soc/uart_reg.h"
+#include "esp_private/periph_ctrl.h"
+#include "soc/gpio_periph.h"
 
 #include "common/cs_dbg.h"
 #include "common/cs_rbuf.h"

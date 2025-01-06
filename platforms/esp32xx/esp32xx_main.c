@@ -24,11 +24,13 @@
 #include "esp_event.h"
 #include "esp_log.h"
 #include "esp_ota_ops.h"
-#include "esp_spi_flash.h"
+#include "esp_mac.h"
+#include "esp_netif.h"
 #include "esp_system.h"
 #include "esp_task_wdt.h"
 #include "nvs_flash.h"
 #include "soc/efuse_reg.h"
+#include "spi_flash_mmap.h"
 
 #include "common/cs_dbg.h"
 #include "mgos_core_dump.h"
@@ -66,7 +68,7 @@ enum mgos_init_result mgos_freertos_pre_init(void) {
 
   LOG(LL_INFO, ("ESP-IDF %s", esp_get_idf_version()));
   LOG(LL_INFO,
-      ("Boot partition: %s; flash: %uM", esp_ota_get_running_partition()->label,
+      ("Boot partition: %s; flash: %luM", esp_ota_get_running_partition()->label,
        g_rom_flashchip.chip_size / 1048576));
 
   {
@@ -80,7 +82,7 @@ enum mgos_init_result mgos_freertos_pre_init(void) {
 
   /* Disable WDT on idle task(s), mgos task WDT should do fine. */
   for (int i = 0; i < configNUM_CORES; i++) {
-    TaskHandle_t h = xTaskGetIdleTaskHandleForCPU(i);
+    TaskHandle_t h = xTaskGetIdleTaskHandleForCore(i);
     if (h != NULL) esp_task_wdt_delete(h);
   }
 
@@ -110,30 +112,29 @@ extern void cs_log_lock(void);
 extern void cs_log_unlock(void);
 extern FILE *cs_log_file;
 extern volatile enum cs_log_level cs_log_cur_msg_level;
-static int sdk_debug_vprintf(esp_log_level_t level, const char *fmt,
-                             va_list ap) {
+static int sdk_debug_vprintf(const char *fmt, va_list ap) {
   FILE *f = (cs_log_file ? cs_log_file : stderr);
   enum cs_log_level cs_level = LL_NONE;
-  switch (level) {
-    case ESP_LOG_NONE:
-      cs_level = LL_NONE;
-      break;
-    case ESP_LOG_ERROR:
-      cs_level = LL_ERROR;
-      break;
-    case ESP_LOG_WARN:
-      cs_level = LL_WARN;
-      break;
-    case ESP_LOG_INFO:
-      cs_level = LL_INFO;
-      break;
-    case ESP_LOG_DEBUG:
-      cs_level = LL_DEBUG;
-      break;
-    case ESP_LOG_VERBOSE:
-      cs_level = LL_VERBOSE_DEBUG;
-      break;
-  }
+  //Switch (level) {
+  //  case ESP_LOG_NONE:
+  //    cs_level = LL_NONE;
+  //    break;
+  //  case ESP_LOG_ERROR:
+  //    cs_level = LL_ERROR;
+  //    break;
+  //  case ESP_LOG_WARN:
+  //    cs_level = LL_WARN;
+  //    break;
+  //  case ESP_LOG_INFO:
+  //    cs_level = LL_INFO;
+  //    break;
+  //  case ESP_LOG_DEBUG:
+  //    cs_level = LL_DEBUG;
+  //    break;
+  //  case ESP_LOG_VERBOSE:
+  //    cs_level = LL_VERBOSE_DEBUG;
+  //    break;
+  //}
   cs_log_lock();
   cs_log_cur_msg_level = cs_level;
   int res = vfprintf(f, fmt, ap);

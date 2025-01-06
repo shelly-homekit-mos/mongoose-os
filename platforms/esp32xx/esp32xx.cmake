@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.16)
 set(PYTHON_DEPS_CHECKED 1)  # Save some build time
 set(EXTRA_CFLAGS $ENV{EXTRA_CFLAGS})
 set(EXTRA_CPPFLAGS $ENV{EXTRA_CPPFLAGS})
@@ -9,7 +9,7 @@ separate_arguments(app_bin_libs NATIVE_COMMAND "$ENV{APP_BIN_LIBS}")
 foreach(bin_lib ${app_bin_libs})
   get_filename_component(target_name ${bin_lib} NAME_WLE)
   add_prebuilt_library(${target_name} ${bin_lib})
-  target_link_libraries(${CMAKE_PROJECT_NAME}.elf ${target_name})
+  target_link_libraries(${CMAKE_PROJECT_NAME}.elf PRIVATE ${target_name})
 endforeach()
 
 # ESP-IDF passes component libs multiple times to the linker.

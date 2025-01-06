@@ -151,7 +151,7 @@ endif
 export COLOR = 0
 
 # Explicitly specify SDK components to build.
-SDK_COMPONENTS += app_trace app_update bootloader bootloader_support cxx driver efuse esp32 \
+SDK_COMPONENTS += app_trace app_update bootloader bootloader_support cxx efuse esp32 \
                   esp_common esp_event esp_gdbstub esp_ipc esp_hw_support esp_netif esp_phy esp_pm \
                   esp_ringbuf esp_rom esp_system esp_timer espcoredump esptool_py \
                   freertos hal heap log lwip micro-ecc newlib nvs_flash partition_table \
@@ -210,11 +210,12 @@ all: $(FW_STAGING_DIR) $(FW_DIR) $(GEN_DIR) $(FW_ZIP)
 cmake-out: $(BUILD_DIR) $(SDKCONFIG_DEFAULTS_OUT) $(APP_SOURCES) $(MGOS_SOURCES) $(GEN_SOURCES) $(MANIFEST_FINAL)
 	cd $(BUILD_DIR) && \
 	  cmake -DCOMPONENTS="$(COMPONENTS)" \
-	        -DEXTRA_COMPONENT_DIRS="$(APP_PATH)/components" \
 	        -DFFI_EXPORTS_C="$(FFI_EXPORTS_C)" \
 	        -DSDKCONFIG="$(SDKCONFIG_OUT)" \
 	        -DSDKCONFIG_DEFAULTS="$(SDKCONFIG_DEFAULTS_OUT)" \
 	        $(MGOS_ESP_PATH)
+
+	        #-DEXTRA_COMPONENT_DIRS="$(APP_PATH)/components" \
 
 $(APP_BIN): cmake-out
 	$(MAKE) -C $(BUILD_DIR) all

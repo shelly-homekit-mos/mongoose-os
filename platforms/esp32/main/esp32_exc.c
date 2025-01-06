@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-#include <freertos/xtensa_api.h>
+#include <xtensa_api.h>
 #include <stdint.h>
 #include <xtensa/corebits.h>
 

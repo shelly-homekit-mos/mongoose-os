@@ -41,17 +41,3 @@ enum mgos_init_result mgos_init(void) {
 
   return MGOS_INIT_OK;
 }
-
-void mgos_app_preinit(void) __attribute__((weak));
-void mgos_app_preinit(void) {
-}
-
-bool mgos_deps_init(void) __attribute__((weak));
-bool mgos_deps_init(void) {
-  return true;
-}
-
-enum mgos_app_init_result mgos_app_init(void) __attribute__((weak));
-enum mgos_app_init_result mgos_app_init(void) {
-  return MGOS_APP_INIT_SUCCESS;
-}

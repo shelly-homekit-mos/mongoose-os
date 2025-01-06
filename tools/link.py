@@ -9,7 +9,7 @@ import sys
 args = [sys.argv[1]]
 in_static_libs = False
 for arg in sys.argv[2:]:
-    if not arg.endswith(".a"):
+    if not (arg.endswith(".a") and "libota" in arg):
         if in_static_libs:
             args.append("-Wl,--end-group")
             args.append("-Wl,--no-whole-archive")

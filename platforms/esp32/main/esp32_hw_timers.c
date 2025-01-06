@@ -21,8 +21,9 @@
 
 #include "common/cs_dbg.h"
 
-#include "driver/periph_ctrl.h"
-#include "driver/timer.h"
+#include "soc/timer_periph.h"
+#include "driver/gptimer.h"
+#include "esp_private/periph_ctrl.h"
 
 #include "mgos_hw_timers_hal.h"
 
@@ -35,14 +36,14 @@ IRAM bool mgos_hw_timers_dev_set(struct mgos_hw_timer_info *ti, int usecs,
   tg->hw_timer[tn].config.val =
       (TIMG_T0_INCREASE | TIMG_T0_ALARM_EN | TIMG_T0_LEVEL_INT_EN |
        /* Set up divider to tick the timer every 1 uS */
-       ((TIMER_BASE_CLK / 1000000) << TIMG_T0_DIVIDER_S));
-  tg->hw_timer[tn].config.autoreload = ((flags & MGOS_TIMER_REPEAT) != 0);
+       ((APB_CLK_FREQ / 1000000) << TIMG_T0_DIVIDER_S));
+  tg->hw_timer[tn].config.tx_autoreload = ((flags & MGOS_TIMER_REPEAT) != 0);
 
-  tg->hw_timer[tn].load_high = 0;
-  tg->hw_timer[tn].load_low = 0;
-  tg->hw_timer[tn].alarm_high = 0;
-  tg->hw_timer[tn].alarm_low = usecs;
-  tg->hw_timer[tn].reload = 1;
+  tg->hw_timer[tn].loadhi.tx_load_hi = 0;
+  tg->hw_timer[tn].loadlo.tx_load_lo = 0;
+  tg->hw_timer[tn].alarmhi.tx_alarm_hi = 0;
+  tg->hw_timer[tn].alarmlo.tx_alarm_lo = usecs;
+  tg->hw_timer[tn].load.tx_load = 1;
 
   /*
    * Note: timer_isr_register is not IRAM safe and this makes the first
@@ -55,11 +56,11 @@ IRAM bool mgos_hw_timers_dev_set(struct mgos_hw_timer_info *ti, int usecs,
   if (dd->inth == NULL) {
     int intr_source = 0;
     switch (dd->tgn) {
-      case TIMER_GROUP_0:
+      case 0:
       default:
         intr_source = ETS_TG0_T0_LEVEL_INTR_SOURCE + tn;
         break;
-      case TIMER_GROUP_1:
+      case 1:
         intr_source = ETS_TG1_T0_LEVEL_INTR_SOURCE + tn;
         break;
     }
@@ -78,10 +79,10 @@ IRAM bool mgos_hw_timers_dev_set(struct mgos_hw_timer_info *ti, int usecs,
     dd->iram = want_iram;
   }
 
-  tg->int_ena.val |= mask;
+  tg->int_ena_timers.val |= mask;
 
   /* Start the timer */
-  tg->hw_timer[tn].config.enable = true;
+  tg->hw_timer[tn].config.tx_en = true;
 
   return true;
 }
@@ -89,12 +90,12 @@ IRAM bool mgos_hw_timers_dev_set(struct mgos_hw_timer_info *ti, int usecs,
 IRAM void mgos_hw_timers_dev_isr_bottom(struct mgos_hw_timer_info *ti) {
   ti->dev.tg->int_clr_timers.val = (1 << ti->dev.tn);
   if (ti->flags & MGOS_TIMER_REPEAT) {
-    ti->dev.tg->hw_timer[ti->dev.tn].config.alarm_en = 1;
+    ti->dev.tg->hw_timer[ti->dev.tn].config.tx_alarm_en = 1;
   }
 }
 
 IRAM void mgos_hw_timers_dev_clear(struct mgos_hw_timer_info *ti) {
-  ti->dev.tg->hw_timer[ti->dev.tn].config.enable = 0;
+  ti->dev.tg->hw_timer[ti->dev.tn].config.tx_en = 0;
 }
 
 bool mgos_hw_timers_dev_init(struct mgos_hw_timer_info *ti) {

@@ -30,6 +30,7 @@
 #include "driver/gpio.h"
 #include "soc/dport_access.h"
 #include "soc/gpio_struct.h"
+#include "soc/gpio_periph.h"
 
 #include "common/cs_dbg.h"
 

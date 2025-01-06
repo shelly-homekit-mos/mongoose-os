@@ -20,6 +20,8 @@
 
 #include "esp_attr.h"
 #include "esp_heap_caps.h"
+#include "esp_mac.h"
+#include "esp_random.h"
 #include "esp_system.h"
 #include "esp_task_wdt.h"
 
@@ -53,8 +55,10 @@ void mgos_dev_system_restart(void) {
     wdt_hal_context_t rtc_wdt_ctx;
     wdt_hal_init(&rtc_wdt_ctx, WDT_RWDT, 0, false);
     wdt_hal_write_protect_disable(&rtc_wdt_ctx);
-    wdt_hal_config_stage(&rtc_wdt_ctx, WDT_STAGE0, 1, WDT_STAGE_ACTION_RESET_SYSTEM);
-    wdt_hal_config_stage(&rtc_wdt_ctx, WDT_STAGE1, 10, WDT_STAGE_ACTION_RESET_RTC);
+    wdt_hal_config_stage(&rtc_wdt_ctx, WDT_STAGE0, 1,
+                         WDT_STAGE_ACTION_RESET_SYSTEM);
+    wdt_hal_config_stage(&rtc_wdt_ctx, WDT_STAGE1, 10,
+                         WDT_STAGE_ACTION_RESET_RTC);
     wdt_hal_set_flashboot_en(&rtc_wdt_ctx, true);
     wdt_hal_write_protect_enable(&rtc_wdt_ctx);
     wdt_hal_enable(&rtc_wdt_ctx);
@@ -82,10 +86,15 @@ void mgos_wdt_disable(void) {
 
 void mgos_wdt_enable(void) {
   esp_task_wdt_add(xTaskGetCurrentTaskHandle());
+  
 }
 
 void mgos_wdt_set_timeout(int secs) {
-  esp_task_wdt_init(secs, true /* panic */);
+  esp_task_wdt_config_t config;
+  config.timeout_ms = secs * 1000;
+  config.trigger_panic = true;
+  config.idle_core_mask = 0;
+  esp_task_wdt_reconfigure(&config);
 }
 
 int mg_ssl_if_mbed_random(void *ctx, unsigned char *buf, size_t len) {

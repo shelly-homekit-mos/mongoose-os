@@ -21,7 +21,6 @@
 #include <string.h>
 #include <sys/param.h>
 
-#include "driver/periph_ctrl.h"
 #include "driver/uart.h"
 #include "esp32c3/rom/uart.h"
 #include "esp_attr.h"
@@ -29,6 +28,10 @@
 #include "soc/rtc_cntl_struct.h"
 #include "soc/uart_reg.h"
 #include "soc/uart_struct.h"
+
+#include "esp_private/periph_ctrl.h"
+#include "soc/gpio_periph.h"
+#include "soc/system_reg.h"
 
 #include "common/cs_dbg.h"
 #include "common/cs_rbuf.h"

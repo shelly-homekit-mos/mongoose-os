@@ -21,8 +21,9 @@
 
 #include "common/cs_dbg.h"
 
-#include "driver/periph_ctrl.h"
-#include "driver/timer.h"
+#include "soc/timer_periph.h"
+#include "driver/gptimer.h"
+#include "esp_private/periph_ctrl.h"
 
 #include "mgos_hw_timers_hal.h"
 
@@ -35,7 +36,7 @@ IRAM bool mgos_hw_timers_dev_set(struct mgos_hw_timer_info *ti, int usecs,
   tg->hw_timer[tn].config.val =
       (TIMG_T0_INCREASE | TIMG_T0_ALARM_EN |
        /* Set up divider to tick the timer every 1 uS */
-       ((TIMER_BASE_CLK / 1000000) << TIMG_T0_DIVIDER_S));
+       ((APB_CLK_FREQ / 1000000) << TIMG_T0_DIVIDER_S));
   tg->hw_timer[tn].config.tx_autoreload = ((flags & MGOS_TIMER_REPEAT) != 0);
 
   tg->hw_timer[tn].loadhi.tx_load_hi = 0;
@@ -55,11 +56,11 @@ IRAM bool mgos_hw_timers_dev_set(struct mgos_hw_timer_info *ti, int usecs,
   if (dd->inth == NULL) {
     int intr_source = 0;
     switch (dd->tgn) {
-      case TIMER_GROUP_0:
+      case 0:
       default:
         intr_source = ETS_TG0_T0_LEVEL_INTR_SOURCE + tn;
         break;
-      case TIMER_GROUP_1:
+      case 1:
         intr_source = ETS_TG1_T0_LEVEL_INTR_SOURCE + tn;
         break;
     }
