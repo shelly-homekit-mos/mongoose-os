@@ -1,27 +1,16 @@
 FROM espressif/idf:v5.4
 
-RUN cd /tmp && \
-    git clone https://github.com/rojer/fsync-stub && \
-    cd /tmp/fsync-stub && ./install.sh && \
-    rm -rf /tmp/fsync-stub
 
-#RUN useradd -d /opt/Espressif -m -s /bin/bash user && chown -R user /opt
+RUN sed -i 's/d_type;/d_type; uint8_t d\[2\];/g' /opt/esp/tools/*/*/*/*/include/sys/dirent.h
+
+ADD patches/*.patch /opt/esp/idf
+RUN cd /opt/esp/idf && ls *.patch && git apply *.patch
+
+ADD patches/lwip/*.patch /opt/esp/idf/components/lwip/lwip
+RUN cd /opt/esp/idf/components/lwip/lwip && ls *.patch && git apply *.patch
+
 
 ARG DOCKER_TAG
-#RUN sudo -u user git clone -j 8 --branch $DOCKER_TAG --depth 1 --recursive --shallow-submodules https://github.com/mongoose-os/esp-idf /opt/Espressif/esp-idf
-#RUN cd /opt/Espressif/esp-idf/ && git rm components/mbedtls/mbedtls && echo "idf_build_get_property(target IDF_TARGET)" > components/mbedtls/CMakeLists.txt && echo "idf_component_register(SRCS "port/md/esp_md.c")" >> components/mbedtls/CMakeLists.txt
-#ENV IDF_PATH=/opt/Espressif/esp-idf
-
-# Apply submodule patches.
-#RUN cd $IDF_PATH && ./install.sh
-
-#RUN pip3 install --no-cache-dir -r /opt/Espressif/esp-idf/tools/requirements/requirements.core.txt
-
-# Pre-build configuration tools
-#RUN cd $IDF_PATH/tools/kconfig && make conf-idf
-
-# TODO: add esp32s3 rom files
-ADD rom.bin rom.elf esp32c3_rev3_rom.bin esp32c3_rev3_rom.elf /opt/Espressif/rom/
 
 ARG TARGETARCH
 ADD mgos_fw_meta.py $TARGETARCH/*lfs $TARGETARCH/*spiffs* /usr/local/bin/

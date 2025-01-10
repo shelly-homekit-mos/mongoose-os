@@ -1,0 +1,25 @@
+From fe6f4d580eb86f647311465fd2835f9e7199893b Mon Sep 17 00:00:00 2001
+From: Markus Kirberg <markus@flobby.net>
+Date: Tue, 7 Jan 2025 19:30:42 +0100
+Subject: [PATCH 4/4] Widen local_fd_t
+
+---
+ components/vfs/vfs.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/components/vfs/vfs.c b/components/vfs/vfs.c
+index ecd1bb2dea..f49a5abb6e 100644
+--- a/components/vfs/vfs.c
++++ b/components/vfs/vfs.c
+@@ -47,7 +47,7 @@ static const char *TAG = "vfs";
+ #define LEN_PATH_PREFIX_IGNORED SIZE_MAX /* special length value for VFS which is never recognised by open() */
+ #define FD_TABLE_ENTRY_UNUSED   (fd_table_t) { .permanent = false, .has_pending_close = false, .has_pending_select = false, .vfs_index = -1, .local_fd = -1 }
+ 
+-typedef uint8_t local_fd_t;
++typedef uint16_t local_fd_t;
+ _Static_assert((1 << (sizeof(local_fd_t)*8)) >= MAX_FDS, "file descriptor type too small");
+ 
+ typedef int8_t vfs_index_t;
+-- 
+2.39.5 (Apple Git-154)
+
