@@ -1,4 +1,4 @@
-FROM espressif/idf:v5.4
+FROM esp-idf:v5.4-esp32
 
 
 RUN sed -i 's/d_type;/d_type; uint8_t d\[2\];/g' /opt/esp/tools/*/*/*/*/include/sys/dirent.h
